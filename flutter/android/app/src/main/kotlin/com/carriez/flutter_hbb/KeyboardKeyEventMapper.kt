@@ -12,10 +12,11 @@ object KeyEventConverter {
         val keyboardMode = keyEventProto.getMode()
 
         if (keyEventProto.hasChr()) {
-            if (keyboardMode == KeyboardMode.Map || keyboardMode == KeyboardMode.Translate) {
-                chrValue = keyEventProto.getChr()
-            } else {
-                chrValue = convertUnicodeToKeyCode(keyEventProto.getChr() as Int)
+            val chr = keyEventProto.getChr().toChar()
+            chrValue = charToKeyCode(chr)
+            // Если заглавная буква, добавляем модификатор Shift
+            if (chr.isUpperCase() || isShiftRequired(chr)) {
+                modifiers = modifiers or KeyEvent.META_SHIFT_ON
             }
         } else if (keyEventProto.hasControlKey()) {
             chrValue = convertControlKeyToKeyCode(keyEventProto.getControlKey())
@@ -113,6 +114,59 @@ object KeyEventConverter {
             ControlKey.Clear -> KeyEvent.KEYCODE_CLEAR
             ControlKey.Pause -> KeyEvent.KEYCODE_BREAK
             else -> 0 // Default to unknown.
+        }
+    }
+
+    // Новая функция: сопоставление символа с keyCode
+    private fun charToKeyCode(c: Char): Int {
+        return when (c) {
+            in 'a'..'z' -> KeyEvent.KEYCODE_A + (c - 'a')
+            in 'A'..'Z' -> KeyEvent.KEYCODE_A + (c - 'A')
+            in '0'..'9' -> KeyEvent.KEYCODE_0 + (c - '0')
+            ' ' -> KeyEvent.KEYCODE_SPACE
+            '\n' -> KeyEvent.KEYCODE_ENTER
+            '\t' -> KeyEvent.KEYCODE_TAB
+            '!' -> KeyEvent.KEYCODE_1 // Shift+1
+            '@' -> KeyEvent.KEYCODE_2 // Shift+2
+            '#' -> KeyEvent.KEYCODE_3 // Shift+3
+            '$' -> KeyEvent.KEYCODE_4 // Shift+4
+            '%' -> KeyEvent.KEYCODE_5 // Shift+5
+            '^' -> KeyEvent.KEYCODE_6 // Shift+6
+            '&' -> KeyEvent.KEYCODE_7 // Shift+7
+            '*' -> KeyEvent.KEYCODE_8 // Shift+8
+            '(' -> KeyEvent.KEYCODE_9 // Shift+9
+            ')' -> KeyEvent.KEYCODE_0 // Shift+0
+            '-' -> KeyEvent.KEYCODE_MINUS
+            '_' -> KeyEvent.KEYCODE_MINUS // Shift+Minus
+            '=' -> KeyEvent.KEYCODE_EQUALS
+            '+' -> KeyEvent.KEYCODE_EQUALS // Shift+Equals
+            '[' -> KeyEvent.KEYCODE_LEFT_BRACKET
+            '{' -> KeyEvent.KEYCODE_LEFT_BRACKET // Shift+Left Bracket
+            ']' -> KeyEvent.KEYCODE_RIGHT_BRACKET
+            '}' -> KeyEvent.KEYCODE_RIGHT_BRACKET // Shift+Right Bracket
+            '\\' -> KeyEvent.KEYCODE_BACKSLASH
+            '|' -> KeyEvent.KEYCODE_BACKSLASH // Shift+Backslash
+            ';' -> KeyEvent.KEYCODE_SEMICOLON
+            ':' -> KeyEvent.KEYCODE_SEMICOLON // Shift+Semicolon
+            '\'' -> KeyEvent.KEYCODE_APOSTROPHE
+            '"' -> KeyEvent.KEYCODE_APOSTROPHE // Shift+Apostrophe
+            ',' -> KeyEvent.KEYCODE_COMMA
+            '<' -> KeyEvent.KEYCODE_COMMA // Shift+Comma
+            '.' -> KeyEvent.KEYCODE_PERIOD
+            '>' -> KeyEvent.KEYCODE_PERIOD // Shift+Period
+            '/' -> KeyEvent.KEYCODE_SLASH
+            '?' -> KeyEvent.KEYCODE_SLASH // Shift+Slash
+            '`' -> KeyEvent.KEYCODE_GRAVE
+            '~' -> KeyEvent.KEYCODE_GRAVE // Shift+Grave
+            else -> 0
+        }
+    }
+
+    // Новая функция: требуется ли Shift для символа
+    private fun isShiftRequired(c: Char): Boolean {
+        return when (c) {
+            in 'A'..'Z', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?', '~' -> true
+            else -> false
         }
     }
 }
